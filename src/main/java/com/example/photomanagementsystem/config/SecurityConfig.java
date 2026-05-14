@@ -13,12 +13,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // 关闭csrf
+                // 关闭CSRF
                 .csrf(csrf -> csrf.disable())
 
                 // 配置接口权限
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/hello").permitAll()
+                        .requestMatchers("/albums/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
