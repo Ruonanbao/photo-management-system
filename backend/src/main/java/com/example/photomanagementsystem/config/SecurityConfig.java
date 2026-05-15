@@ -11,18 +11,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
-                // 关闭CSRF
                 .csrf(csrf -> csrf.disable())
-
-                // 配置接口权限
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/albums/**").permitAll()
+                        .requestMatchers("/api/v1/albums/**").permitAll()
                         .anyRequest().authenticated()
                 )
-
-                // 使用默认登录页
                 .formLogin(Customizer.withDefaults());
 
         return http.build();
