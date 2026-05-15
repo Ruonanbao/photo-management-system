@@ -14,9 +14,13 @@ public class AlbumVO {
 
     private String name;
 
+    private String description;
+
     private Boolean defaultAlbum;
 
     private Integer photoCount;
 
     private LocalDateTime createTime;
+
+    private LocalDateTime updateTime;
 }
