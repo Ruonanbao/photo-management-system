@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260522-001-create-sys-user" author="brn">
+        <sqlFile path="db/sql/create_table_sys_user.sql" relativeToChangelogFile="false"/>
+    </changeSet>
+
+    <changeSet id="20260522-002-create-pm-album" author="brn">
+        <sqlFile path="db/sql/create_table_pm_album.sql" relativeToChangelogFile="false"/>
+    </changeSet>
+
+    <changeSet id="20260522-003-create-pm-photo" author="brn">
+        <sqlFile path="db/sql/create_table_pm_photo.sql" relativeToChangelogFile="false"/>
+    </changeSet>
+
+    <changeSet id="20260522-004-create-pm-album-photo" author="brn">
+        <sqlFile path="db/sql/create_table_pm_album_photo.sql" relativeToChangelogFile="false"/>
+    </changeSet>
+
+    <changeSet id="20260522-005-create-pm-face" author="brn">
+        <sqlFile path="db/sql/create_table_pm_face.sql" relativeToChangelogFile="false"/>
+    </changeSet>
+
+    <changeSet id="20260522-006-create-pm-person" author="brn">
+        <sqlFile path="db/sql/create_table_pm_person.sql" relativeToChangelogFile="false"/>
+    </changeSet>
+</databaseChangeLog>
