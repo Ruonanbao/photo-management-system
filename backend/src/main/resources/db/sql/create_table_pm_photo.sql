@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS pm_photo (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES sys_user(id),
+    filename VARCHAR(255) NOT NULL,
+    original_name VARCHAR(255),
+    file_path VARCHAR(500) NOT NULL,
+    thumbnail_path VARCHAR(500),
+    file_size BIGINT,
+    mime_type VARCHAR(50),
+    width INTEGER,
+    height INTEGER,
+    shot_at TIMESTAMP,
+    latitude DECIMAL(10, 7),
+    longitude DECIMAL(10, 7),
+    location_name VARCHAR(255),
+    camera_make VARCHAR(100),
+    camera_model VARCHAR(100),
+    is_favorite BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

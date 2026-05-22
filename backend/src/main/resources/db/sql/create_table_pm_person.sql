@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS pm_person (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES sys_user(id),
+    name VARCHAR(100),
+    cover_face_id BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
