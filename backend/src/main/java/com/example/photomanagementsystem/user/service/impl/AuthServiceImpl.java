@@ -26,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
 
     private static final int USERNAME_MAX_LENGTH = 50;
 
-    private static final int PASSWORD_MIN_LENGTH = 6;
+    private static final int PASSWORD_MIN_LENGTH = 4;
 
     private static final int NICKNAME_MAX_LENGTH = 50;
 
@@ -115,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BizException(400, "密码不能为空");
         }
         if (password.length() < PASSWORD_MIN_LENGTH) {
-            throw new BizException(400, "密码长度不能少于6");
+            throw new BizException(400, "密码长度不能少于4");
         }
     }
 
