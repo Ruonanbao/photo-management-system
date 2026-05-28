@@ -9,6 +9,7 @@ import com.example.photomanagementsystem.photo.vo.PhotoPageVO;
 import com.example.photomanagementsystem.photo.vo.PhotoPeopleVO;
 import com.example.photomanagementsystem.photo.vo.PhotoTimelineVO;
 import com.example.photomanagementsystem.photo.vo.PhotoVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,6 +21,8 @@ public interface PhotoService {
     PhotoPageVO<PhotoVO> listPhotos(PhotoListQueryDTO queryDTO);
 
     PhotoVO uploadPhoto(PhotoUploadDTO uploadDTO);
+
+    List<PhotoVO> uploadPhotos(List<MultipartFile> files, Long albumId);
 
     PhotoVO getPhoto(Long id);
 

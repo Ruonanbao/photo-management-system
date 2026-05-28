@@ -8,7 +8,7 @@
       <nav class="nav-list">
         <RouterLink to="/home" class="nav-item">
           <Picture />
-          <span>照片</span>
+          <span>照片库</span>
         </RouterLink>
         <RouterLink to="/albums" class="nav-item">
           <Collection />
@@ -17,6 +17,18 @@
         <RouterLink to="/persons" class="nav-item">
           <User />
           <span>人物</span>
+        </RouterLink>
+        <RouterLink to="/explore" class="nav-item">
+          <Location />
+          <span>探索/地点</span>
+        </RouterLink>
+        <RouterLink to="/favorites" class="nav-item">
+          <Star />
+          <span>收藏</span>
+        </RouterLink>
+        <RouterLink to="/settings" class="nav-item">
+          <Setting />
+          <span>设置</span>
         </RouterLink>
       </nav>
       <div class="sidebar-footer">
@@ -33,7 +45,7 @@
         <el-input
           v-model="keyword"
           class="search"
-          placeholder="搜索照片、地点或文件名"
+          placeholder="搜索照片、地点、人物或相册"
           clearable
           @input="appStore.setKeyword(keyword)"
         >
@@ -42,7 +54,9 @@
           </template>
         </el-input>
         <el-button :icon="Upload" type="primary" @click="appStore.openUpload()">上传</el-button>
-        <el-button :icon="SwitchButton" circle @click="handleLogout" />
+        <el-tooltip content="登出">
+          <el-button :icon="SwitchButton" circle @click="handleLogout" />
+        </el-tooltip>
       </header>
       <section class="content">
         <RouterView />
@@ -56,7 +70,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Collection, Picture, Search, SwitchButton, Upload, User } from '@element-plus/icons-vue'
+import { Collection, Location, Picture, Search, Setting, Star, SwitchButton, Upload, User } from '@element-plus/icons-vue'
 
 import UploadDialog from '@/components/UploadDialog.vue'
 import { useAppStore } from '@/store/app'

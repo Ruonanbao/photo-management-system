@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import type { Photo } from '@/api/photo'
 
 export interface Person {
   id: number
@@ -7,14 +8,6 @@ export interface Person {
   photoCount?: number
   createTime?: string
   updateTime?: string
-}
-
-export interface PersonPhoto {
-  id: number
-  photoId?: number
-  filename?: string
-  originalName?: string
-  shotAt?: string
 }
 
 export function listPersons() {
@@ -34,5 +27,5 @@ export function deletePerson(id: number) {
 }
 
 export function listPersonPhotos(id: number) {
-  return request.get<unknown, PersonPhoto[]>(`/api/v1/persons/${id}/photos`)
+  return request.get<unknown, Photo[]>(`/api/v1/persons/${id}/photos`)
 }

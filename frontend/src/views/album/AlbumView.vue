@@ -10,9 +10,10 @@
 
     <el-skeleton v-if="loading" :rows="6" animated />
     <div v-else class="album-grid">
-      <article v-for="album in albums" :key="album.id" class="album-card">
+      <article v-for="album in albums" :key="album.id" class="album-card" @click="$router.push(`/albums/${album.id}`)">
         <div class="album-cover">
-          <Collection />
+          <img v-if="album.coverPhotoId" :src="photoDownloadUrl(album.coverPhotoId)" alt="" />
+          <Collection v-else />
         </div>
         <h3>{{ album.name }}</h3>
         <p>{{ album.description || '无描述' }}</p>
@@ -42,6 +43,7 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { Collection, Plus } from '@element-plus/icons-vue'
 
 import { createAlbum, listAlbums, type Album } from '@/api/album'
+import { photoDownloadUrl } from '@/utils/format'
 import { useAppStore } from '@/store/app'
 
 const appStore = useAppStore()
@@ -49,10 +51,7 @@ const albums = ref<Album[]>([])
 const loading = ref(false)
 const saving = ref(false)
 const createVisible = ref(false)
-const form = reactive({
-  name: '',
-  description: ''
-})
+const form = reactive({ name: '', description: '' })
 
 async function loadAlbums() {
   loading.value = true

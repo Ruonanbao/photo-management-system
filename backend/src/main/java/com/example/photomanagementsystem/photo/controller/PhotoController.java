@@ -47,19 +47,33 @@ public class PhotoController {
     @GetMapping
     public Result<PhotoPageVO<PhotoVO>> listPhotos(@RequestParam(required = false) Boolean favorite,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String locationName,
+            @RequestParam(required = false) Long personId,
+            @RequestParam(required = false) Long albumId,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         PhotoListQueryDTO queryDTO = new PhotoListQueryDTO();
         queryDTO.setFavorite(favorite);
         queryDTO.setKeyword(keyword);
+        queryDTO.setStartTime(startTime);
+        queryDTO.setEndTime(endTime);
+        queryDTO.setLocationName(locationName);
+        queryDTO.setPersonId(personId);
+        queryDTO.setAlbumId(albumId);
         queryDTO.setPage(page);
         queryDTO.setSize(size);
         return Result.success(photoService.listPhotos(queryDTO));
     }
 
     @PostMapping("/upload")
-    public Result<PhotoVO> uploadPhoto(@RequestParam("file") MultipartFile file,
+    public Result<?> uploadPhoto(@RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
             @RequestParam(required = false) Long albumId) {
+        if (files != null && !files.isEmpty()) {
+            return Result.success(photoService.uploadPhotos(files, albumId));
+        }
         PhotoUploadDTO uploadDTO = new PhotoUploadDTO();
         uploadDTO.setFile(file);
         uploadDTO.setAlbumId(albumId);

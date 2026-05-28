@@ -12,6 +12,16 @@ public class PhotoListQueryDTO {
 
     private String keyword;
 
+    private String startTime;
+
+    private String endTime;
+
+    private String locationName;
+
+    private Long personId;
+
+    private Long albumId;
+
     private Integer page;
 
     private Integer size;

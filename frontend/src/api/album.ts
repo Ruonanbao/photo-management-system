@@ -5,6 +5,7 @@ export interface Album {
   id: number
   name: string
   description?: string
+  coverPhotoId?: number
   defaultAlbum?: boolean
   photoCount?: number
   createTime?: string

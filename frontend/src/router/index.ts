@@ -26,6 +26,12 @@ const router = createRouter({
           component: () => import('@/views/album/AlbumView.vue')
         },
         {
+          path: 'albums/:id',
+          name: 'album-detail',
+          component: () => import('@/views/album/AlbumDetailView.vue'),
+          props: (route) => ({ id: Number(route.params.id) })
+        },
+        {
           path: 'photos/:id',
           name: 'photo-detail',
           component: () => import('@/views/photo/PhotoDetailView.vue'),
@@ -35,6 +41,27 @@ const router = createRouter({
           path: 'persons',
           name: 'persons',
           component: () => import('@/views/person/PersonView.vue')
+        },
+        {
+          path: 'persons/:id',
+          name: 'person-detail',
+          component: () => import('@/views/person/PersonDetailView.vue'),
+          props: (route) => ({ id: Number(route.params.id) })
+        },
+        {
+          path: 'explore',
+          name: 'explore',
+          component: () => import('@/views/explore/ExploreView.vue')
+        },
+        {
+          path: 'favorites',
+          name: 'favorites',
+          component: () => import('@/views/favorite/FavoriteView.vue')
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('@/views/settings/SettingsView.vue')
         }
       ]
     }

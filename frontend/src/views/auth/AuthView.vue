@@ -4,7 +4,7 @@
       <div>
         <p class="eyebrow">Photo Management</p>
         <h1>整理每一张值得留下的照片</h1>
-        <p>轻量的个人照片管理入口，连接后端后即可浏览照片流、相册和人物聚合。</p>
+        <p>本地部署的个人照片管理入口，支持照片库、相册、人物与地点聚合。</p>
       </div>
     </section>
     <section class="auth-panel">
@@ -54,17 +54,8 @@ const userStore = useUserStore()
 const mode = ref('login')
 const loading = ref(false)
 
-const loginForm = reactive({
-  username: '',
-  password: ''
-})
-
-const registerForm = reactive({
-  username: '',
-  password: '',
-  nickname: '',
-  email: ''
-})
+const loginForm = reactive({ username: '', password: '' })
+const registerForm = reactive({ username: '', password: '', nickname: '', email: '' })
 
 async function handleLogin() {
   loading.value = true

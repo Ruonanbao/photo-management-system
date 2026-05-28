@@ -12,6 +12,7 @@ import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -80,7 +81,7 @@ public class PhotoMapper {
         SqlCondition condition = buildListCondition(userId, queryDTO);
         String sql = """
                 SELECT %s
-                FROM pm_photo
+                FROM pm_photo photo
                 %s
                 ORDER BY COALESCE(shot_at, created_at) DESC, id DESC
                 LIMIT ? OFFSET ?
@@ -93,7 +94,7 @@ public class PhotoMapper {
 
     public long countByUserId(Long userId, PhotoListQueryDTO queryDTO) {
         SqlCondition condition = buildListCondition(userId, queryDTO);
-        String sql = "SELECT COUNT(1) FROM pm_photo " + condition.whereSql();
+        String sql = "SELECT COUNT(1) FROM pm_photo photo " + condition.whereSql();
         Long count = jdbcTemplate.queryForObject(sql, Long.class, condition.params().toArray());
         return count == null ? 0L : count;
     }
@@ -164,25 +165,91 @@ public class PhotoMapper {
     private SqlCondition buildListCondition(Long userId, PhotoListQueryDTO queryDTO) {
         List<String> conditions = new ArrayList<>();
         List<Object> params = new ArrayList<>();
-        conditions.add("user_id = ?");
+        conditions.add("photo.user_id = ?");
         params.add(userId);
 
         if (queryDTO != null && queryDTO.getFavorite() != null) {
-            conditions.add("is_favorite = ?");
+            conditions.add("photo.is_favorite = ?");
             params.add(queryDTO.getFavorite());
         }
         if (queryDTO != null && StringUtils.hasText(queryDTO.getKeyword())) {
             conditions.add("""
-                    (LOWER(filename) LIKE LOWER(?)
-                    OR LOWER(COALESCE(original_name, '')) LIKE LOWER(?)
-                    OR LOWER(COALESCE(location_name, '')) LIKE LOWER(?))
+                    (LOWER(photo.filename) LIKE LOWER(?)
+                    OR LOWER(COALESCE(photo.original_name, '')) LIKE LOWER(?)
+                    OR LOWER(COALESCE(photo.location_name, '')) LIKE LOWER(?)
+                    OR EXISTS (
+                        SELECT 1
+                        FROM pm_album_photo relation
+                        INNER JOIN pm_album album ON album.id = relation.album_id
+                        WHERE relation.photo_id = photo.id
+                          AND album.user_id = photo.user_id
+                          AND album.is_deleted = FALSE
+                          AND LOWER(album.name) LIKE LOWER(?)
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM pm_face face
+                        INNER JOIN pm_person person ON person.id = face.person_id
+                        WHERE face.photo_id = photo.id
+                          AND person.user_id = photo.user_id
+                          AND LOWER(COALESCE(person.name, '')) LIKE LOWER(?)
+                    ))
                     """);
             String keyword = "%" + queryDTO.getKeyword().trim() + "%";
             params.add(keyword);
             params.add(keyword);
             params.add(keyword);
+            params.add(keyword);
+            params.add(keyword);
+        }
+        if (queryDTO != null && StringUtils.hasText(queryDTO.getLocationName())) {
+            conditions.add("LOWER(COALESCE(photo.location_name, '')) LIKE LOWER(?)");
+            params.add("%" + queryDTO.getLocationName().trim() + "%");
+        }
+        if (queryDTO != null && queryDTO.getAlbumId() != null) {
+            conditions.add("""
+                    EXISTS (
+                        SELECT 1
+                        FROM pm_album_photo relation
+                        INNER JOIN pm_album album ON album.id = relation.album_id
+                        WHERE relation.photo_id = photo.id
+                          AND relation.album_id = ?
+                          AND album.user_id = photo.user_id
+                          AND album.is_deleted = FALSE
+                    )
+                    """);
+            params.add(queryDTO.getAlbumId());
+        }
+        if (queryDTO != null && queryDTO.getPersonId() != null) {
+            conditions.add("""
+                    EXISTS (
+                        SELECT 1
+                        FROM pm_face face
+                        INNER JOIN pm_person person ON person.id = face.person_id
+                        WHERE face.photo_id = photo.id
+                          AND face.person_id = ?
+                          AND person.user_id = photo.user_id
+                    )
+                    """);
+            params.add(queryDTO.getPersonId());
+        }
+        if (queryDTO != null && StringUtils.hasText(queryDTO.getStartTime())) {
+            conditions.add("COALESCE(photo.shot_at, photo.created_at) >= ?");
+            params.add(parseDateTime(queryDTO.getStartTime(), "开始时间格式不正确"));
+        }
+        if (queryDTO != null && StringUtils.hasText(queryDTO.getEndTime())) {
+            conditions.add("COALESCE(photo.shot_at, photo.created_at) <= ?");
+            params.add(parseDateTime(queryDTO.getEndTime(), "结束时间格式不正确"));
         }
         return new SqlCondition("WHERE " + String.join(" AND ", conditions), params);
+    }
+
+    private LocalDateTime parseDateTime(String value, String message) {
+        try {
+            return LocalDateTime.parse(value.trim());
+        } catch (DateTimeParseException exception) {
+            throw new com.example.photomanagementsystem.common.BizException(400, message);
+        }
     }
 
     private PhotoVO toPhotoVO(Photo photo) {

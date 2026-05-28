@@ -20,20 +20,14 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 相册业务实现。
- */
 @Service
 public class AlbumServiceImpl implements AlbumService {
 
     private static final int ALBUM_NAME_MAX_LENGTH = 50;
-
     private static final long MOCK_USER_ID = 1L;
 
     private final AlbumMapper albumMapper;
-
     private final AlbumPhotoMapper albumPhotoMapper;
-
     private final PhotoMapper photoMapper;
 
     public AlbumServiceImpl(AlbumMapper albumMapper, AlbumPhotoMapper albumPhotoMapper, PhotoMapper photoMapper) {
@@ -76,9 +70,7 @@ public class AlbumServiceImpl implements AlbumService {
     @Override
     public AlbumVO getAlbum(Long id) {
         Long userId = getCurrentUserId();
-        return albumMapper.selectByIdAndUserId(id, userId)
-                .map(this::convertToAlbumVO)
-                .orElseThrow(() -> new BizException(404, "相册不存在"));
+        return convertToAlbumVO(getAlbumEntity(id, userId));
     }
 
     @Override
@@ -86,7 +78,6 @@ public class AlbumServiceImpl implements AlbumService {
     public AlbumVO updateAlbum(Long id, AlbumUpdateDTO updateDTO) {
         Long userId = getCurrentUserId();
         Album album = getAlbumEntity(id, userId);
-
         String albumName = updateDTO == null ? null : updateDTO.getName();
         validateAlbumName(albumName);
 
@@ -110,9 +101,7 @@ public class AlbumServiceImpl implements AlbumService {
         if (Boolean.TRUE.equals(album.getDefaultAlbum())) {
             throw new BizException(400, "默认相册不能删除");
         }
-        if (albumPhotoMapper.countByAlbumId(id) > 0) {
-            throw new BizException(400, "相册下还有照片，不能删除");
-        }
+        albumPhotoMapper.deleteByAlbumId(id);
         albumMapper.deleteByIdAndUserId(id, userId);
     }
 
@@ -164,6 +153,9 @@ public class AlbumServiceImpl implements AlbumService {
     }
 
     private Album getAlbumEntity(Long id, Long userId) {
+        if (id == null) {
+            throw new BizException(400, "相册ID不能为空");
+        }
         return albumMapper.selectByIdAndUserId(id, userId)
                 .orElseThrow(() -> new BizException(404, "相册不存在"));
     }
@@ -186,7 +178,7 @@ public class AlbumServiceImpl implements AlbumService {
     }
 
     private Long getCurrentUserId() {
-        // TODO 接入登录后从当前认证上下文获取用户ID。
+        // TODO Replace with authenticated user id after JWT or Session is enabled.
         return MOCK_USER_ID;
     }
 
@@ -195,6 +187,7 @@ public class AlbumServiceImpl implements AlbumService {
         albumVO.setId(album.getId());
         albumVO.setName(album.getName());
         albumVO.setDescription(album.getDescription());
+        albumVO.setCoverPhotoId(album.getCoverPhotoId());
         albumVO.setDefaultAlbum(album.getDefaultAlbum());
         albumVO.setPhotoCount(albumPhotoMapper.countByAlbumId(album.getId()));
         albumVO.setCreateTime(album.getCreateTime());
@@ -205,6 +198,21 @@ public class AlbumServiceImpl implements AlbumService {
     private PhotoVO convertToPhotoVO(Photo photo) {
         PhotoVO photoVO = new PhotoVO();
         photoVO.setId(photo.getId());
+        photoVO.setFilename(photo.getFilename());
+        photoVO.setOriginalName(photo.getOriginalName());
+        photoVO.setFileSize(photo.getFileSize());
+        photoVO.setMimeType(photo.getMimeType());
+        photoVO.setWidth(photo.getWidth());
+        photoVO.setHeight(photo.getHeight());
+        photoVO.setShotAt(photo.getShotAt());
+        photoVO.setLatitude(photo.getLatitude());
+        photoVO.setLongitude(photo.getLongitude());
+        photoVO.setLocationName(photo.getLocationName());
+        photoVO.setCameraMake(photo.getCameraMake());
+        photoVO.setCameraModel(photo.getCameraModel());
+        photoVO.setFavorite(photo.getFavorite());
+        photoVO.setCreateTime(photo.getCreateTime());
+        photoVO.setUpdateTime(photo.getUpdateTime());
         return photoVO;
     }
 }

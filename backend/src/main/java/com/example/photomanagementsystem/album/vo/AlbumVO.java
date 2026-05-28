@@ -16,6 +16,8 @@ public class AlbumVO {
 
     private String description;
 
+    private Long coverPhotoId;
+
     private Boolean defaultAlbum;
 
     private Integer photoCount;
