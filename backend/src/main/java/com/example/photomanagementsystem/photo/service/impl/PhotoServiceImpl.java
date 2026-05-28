@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -38,43 +39,37 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Photo service implementation.
- */
 @Service
 public class PhotoServiceImpl implements PhotoService {
 
     private static final long MOCK_USER_ID = 1L;
-
     private static final int DEFAULT_PAGE = 1;
-
     private static final int DEFAULT_SIZE = 20;
-
     private static final int MAX_SIZE = 100;
-
     private static final DateTimeFormatter YEAR_MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
-
-    private static final Set<String> ALLOWED_MIME_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif");
 
     private final PhotoMapper photoMapper;
-
     private final PhotoAlbumMapper photoAlbumMapper;
-
     private final String storagePath;
+    private final long maxFileSizeBytes;
 
     public PhotoServiceImpl(PhotoMapper photoMapper, PhotoAlbumMapper photoAlbumMapper,
-            @Value("${photo.storage.path:uploads/photos}") String storagePath) {
+            @Value("${photo.storage.path:uploads/photos}") String storagePath,
+            @Value("${spring.servlet.multipart.max-file-size:50MB}") DataSize maxFileSize) {
         this.photoMapper = photoMapper;
         this.photoAlbumMapper = photoAlbumMapper;
         this.storagePath = storagePath;
+        this.maxFileSizeBytes = maxFileSize.toBytes();
     }
 
     @Override
@@ -136,6 +131,22 @@ public class PhotoServiceImpl implements PhotoService {
             deleteLocalFileQuietly(savedPath);
             throw exception;
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<PhotoVO> uploadPhotos(List<MultipartFile> files, Long albumId) {
+        if (files == null || files.isEmpty()) {
+            throw new BizException(400, "上传文件不能为空");
+        }
+        List<PhotoVO> uploadedPhotos = new ArrayList<>();
+        for (MultipartFile file : files) {
+            PhotoUploadDTO uploadDTO = new PhotoUploadDTO();
+            uploadDTO.setFile(file);
+            uploadDTO.setAlbumId(albumId);
+            uploadedPhotos.add(uploadPhoto(uploadDTO));
+        }
+        return uploadedPhotos;
     }
 
     @Override
@@ -252,8 +263,11 @@ public class PhotoServiceImpl implements PhotoService {
         if (file == null || file.isEmpty()) {
             throw new BizException(400, "上传文件不能为空");
         }
+        if (file.getSize() > maxFileSizeBytes) {
+            throw new BizException(413, "上传文件过大");
+        }
         if (!ALLOWED_MIME_TYPES.contains(file.getContentType())) {
-            throw new BizException(400, "只允许上传 JPEG、PNG、WEBP 图片");
+            throw new BizException(400, "只允许上传 JPG、PNG、WEBP、HEIC 图片");
         }
     }
 
@@ -282,6 +296,8 @@ public class PhotoServiceImpl implements PhotoService {
                 case "image/jpeg" -> ".jpg";
                 case "image/png" -> ".png";
                 case "image/webp" -> ".webp";
+                case "image/heic" -> ".heic";
+                case "image/heif" -> ".heif";
                 default -> "";
             };
         }
@@ -392,7 +408,7 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     private Long getCurrentUserId() {
-        // TODO Replace with authenticated user id after login is enabled.
+        // TODO Replace with authenticated user id after JWT or Session is enabled.
         return MOCK_USER_ID;
     }
 

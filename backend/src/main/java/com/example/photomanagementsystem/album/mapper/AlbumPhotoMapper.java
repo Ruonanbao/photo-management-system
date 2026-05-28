@@ -39,4 +39,9 @@ public class AlbumPhotoMapper {
         String sql = "DELETE FROM pm_album_photo WHERE album_id = ? AND photo_id = ?";
         jdbcTemplate.update(sql, albumId, photoId);
     }
+
+    public void deleteByAlbumId(Long albumId) {
+        String sql = "DELETE FROM pm_album_photo WHERE album_id = ?";
+        jdbcTemplate.update(sql, albumId);
+    }
 }

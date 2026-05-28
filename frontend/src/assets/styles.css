@@ -193,6 +193,46 @@ button {
   transform: scale(1.03);
 }
 
+.favorite-float {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #ffffff;
+  background: rgba(17, 24, 39, 0.56);
+  opacity: 0;
+  cursor: pointer;
+}
+
+.remove-float {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #ffffff;
+  background: rgba(185, 28, 28, 0.72);
+  opacity: 0;
+  cursor: pointer;
+}
+
+.photo-tile:hover .favorite-float {
+  opacity: 1;
+}
+
+.photo-tile:hover .remove-float {
+  opacity: 1;
+}
+
 .photo-meta {
   position: absolute;
   right: 0;
@@ -242,6 +282,12 @@ button {
   background: #dff3f7;
 }
 
+.album-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .album-cover svg {
   width: 42px;
   height: 42px;
@@ -272,6 +318,84 @@ button {
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 24px;
   min-height: calc(100vh - 138px);
+}
+
+.library-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px;
+  gap: 16px;
+}
+
+.timeline-group {
+  display: grid;
+  gap: 10px;
+}
+
+.timeline-group h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.year-rail {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.year-rail a {
+  color: #52606d;
+  text-decoration: none;
+}
+
+.action-row,
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subtle {
+  margin: 6px 0 0;
+  color: #66788a;
+}
+
+.explore-grid {
+  display: grid;
+  gap: 22px;
+}
+
+.explore-card {
+  display: grid;
+  gap: 10px;
+}
+
+.explore-card h3,
+.settings-panel h3 {
+  margin: 0;
+}
+
+.explore-card > span,
+.settings-panel p {
+  margin: 0;
+  color: #66788a;
+}
+
+.explore-card .photo-grid {
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+}
+
+.settings-panel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 520px;
+  padding: 18px;
+  border: 1px solid #e3e8ef;
+  border-radius: 8px;
+  background: #ffffff;
 }
 
 .photo-stage {
@@ -431,8 +555,13 @@ button {
   }
 
   .detail-layout,
+  .library-layout,
   .auth-page {
     grid-template-columns: 1fr;
+  }
+
+  .year-rail {
+    display: none;
   }
 
   .auth-visual {

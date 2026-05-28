@@ -29,26 +29,30 @@ export interface PhotoPage<T> {
 export interface PhotoQuery {
   favorite?: boolean
   keyword?: string
+  startTime?: string
+  endTime?: string
+  locationName?: string
+  personId?: number
+  albumId?: number
   page?: number
   size?: number
 }
 
 export interface PhotoTimeline {
-  date: string
-  count: number
+  yearMonth: string
+  photos: Photo[]
 }
 
 export interface PhotoLocation {
   locationName: string
-  latitude?: number
-  longitude?: number
-  count: number
+  photos: Photo[]
 }
 
 export interface PhotoPeople {
   personId: number
-  name: string
-  count: number
+  personName?: string
+  coverFaceId?: number
+  photos: Photo[]
 }
 
 export function listPhotos(params: PhotoQuery = {}) {
@@ -60,6 +64,13 @@ export function uploadPhoto(file: File, albumId?: number) {
   formData.append('file', file)
   if (albumId) formData.append('albumId', String(albumId))
   return request.post<unknown, Photo>('/api/v1/photos/upload', formData)
+}
+
+export function uploadPhotos(files: File[], albumId?: number) {
+  const formData = new FormData()
+  files.forEach((file) => formData.append('files', file))
+  if (albumId) formData.append('albumId', String(albumId))
+  return request.post<unknown, Photo[]>('/api/v1/photos/upload', formData)
 }
 
 export function getPhoto(id: number) {

@@ -6,8 +6,15 @@
     </section>
     <aside class="info-panel">
       <div class="panel-header">
+        <el-button :icon="ArrowLeft" circle @click="router.back()" />
         <h2>{{ photo?.originalName || photo?.filename || '照片详情' }}</h2>
-        <el-button v-if="photo" :icon="photo.favorite ? StarFilled : Star" circle @click="toggleFavorite" />
+      </div>
+      <div class="detail-actions">
+        <el-button v-if="photo" :icon="photo.favorite ? StarFilled : Star" @click="toggleFavorite">
+          {{ photo.favorite ? '取消收藏' : '收藏' }}
+        </el-button>
+        <el-button v-if="photo" :icon="Download" @click="triggerPhotoDownload(photo.id)">下载</el-button>
+        <el-button v-if="photo" :icon="Delete" type="danger" plain @click="handleDelete">删除</el-button>
       </div>
       <el-descriptions v-if="photo" :column="1" border>
         <el-descriptions-item label="文件名">{{ photo.filename }}</el-descriptions-item>
@@ -15,9 +22,9 @@
         <el-descriptions-item label="尺寸">{{ photo.width || '-' }} x {{ photo.height || '-' }}</el-descriptions-item>
         <el-descriptions-item label="拍摄时间">{{ formatDateTime(photo.shotAt) }}</el-descriptions-item>
         <el-descriptions-item label="地点">{{ photo.locationName || '未记录' }}</el-descriptions-item>
-        <el-descriptions-item label="相机">{{ cameraName }}</el-descriptions-item>
+        <el-descriptions-item label="相机型号">{{ cameraName }}</el-descriptions-item>
+        <el-descriptions-item label="收藏状态">{{ photo.favorite ? '已收藏' : '未收藏' }}</el-descriptions-item>
       </el-descriptions>
-      <el-button class="full-button danger-button" :icon="Delete" @click="handleDelete">删除照片</el-button>
     </aside>
   </div>
 </template>
@@ -25,10 +32,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Delete, Star, StarFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete, Download, Star, StarFilled } from '@element-plus/icons-vue'
 
 import { deletePhoto, getPhoto, updateFavorite, type Photo } from '@/api/photo'
-import { formatDateTime, formatFileSize, photoDownloadUrl } from '@/utils/format'
+import { formatDateTime, formatFileSize, photoDownloadUrl, triggerPhotoDownload } from '@/utils/format'
 
 const props = defineProps<{ id: number }>()
 const router = useRouter()
