@@ -1,6 +1,7 @@
 package com.example.photomanagementsystem.person.service.impl;
 
 import com.example.photomanagementsystem.common.BizException;
+import com.example.photomanagementsystem.common.CurrentUserProvider;
 import com.example.photomanagementsystem.person.dto.PersonUpdateDTO;
 import com.example.photomanagementsystem.person.entity.Person;
 import com.example.photomanagementsystem.person.mapper.PersonMapper;
@@ -23,15 +24,16 @@ public class PersonServiceImpl implements PersonService {
 
     private static final int PERSON_NAME_MAX_LENGTH = 100;
 
-    private static final long MOCK_USER_ID = 1L;
-
     private final PersonMapper personMapper;
 
     private final PersonPhotoMapper personPhotoMapper;
+    private final CurrentUserProvider currentUserProvider;
 
-    public PersonServiceImpl(PersonMapper personMapper, PersonPhotoMapper personPhotoMapper) {
+    public PersonServiceImpl(PersonMapper personMapper, PersonPhotoMapper personPhotoMapper,
+            CurrentUserProvider currentUserProvider) {
         this.personMapper = personMapper;
         this.personPhotoMapper = personPhotoMapper;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @Override
@@ -66,7 +68,7 @@ public class PersonServiceImpl implements PersonService {
     public void deletePerson(Long id) {
         Long userId = getCurrentUserId();
         getPersonEntity(id, userId);
-        personMapper.clearFacesByPersonId(id);
+        personMapper.clearFacesByPersonIdAndUserId(id, userId);
         personMapper.deleteByIdAndUserId(id, userId);
     }
 
@@ -95,8 +97,7 @@ public class PersonServiceImpl implements PersonService {
     }
 
     private Long getCurrentUserId() {
-        // TODO Replace with authenticated user id after JWT is enabled.
-        return MOCK_USER_ID;
+        return currentUserProvider.getCurrentUserId();
     }
 
     private PersonVO convertToPersonVO(Person person) {
@@ -104,7 +105,7 @@ public class PersonServiceImpl implements PersonService {
         personVO.setId(person.getId());
         personVO.setName(person.getName());
         personVO.setCoverFaceId(person.getCoverFaceId());
-        personVO.setPhotoCount(personMapper.countPhotosByPersonId(person.getId()));
+        personVO.setPhotoCount(personMapper.countPhotosByPersonIdAndUserId(person.getId(), person.getUserId()));
         personVO.setCreateTime(person.getCreateTime());
         personVO.setUpdateTime(person.getUpdateTime());
         return personVO;

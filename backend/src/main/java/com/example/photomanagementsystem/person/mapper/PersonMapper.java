@@ -65,9 +65,16 @@ public class PersonMapper {
         return person;
     }
 
-    public void clearFacesByPersonId(Long personId) {
-        String sql = "UPDATE pm_face SET person_id = NULL WHERE person_id = ?";
-        jdbcTemplate.update(sql, personId);
+    public void clearFacesByPersonIdAndUserId(Long personId, Long userId) {
+        String sql = """
+                UPDATE pm_face face
+                SET person_id = NULL
+                FROM pm_person person
+                WHERE face.person_id = person.id
+                  AND person.id = ?
+                  AND person.user_id = ?
+                """;
+        jdbcTemplate.update(sql, personId, userId);
     }
 
     public void deleteByIdAndUserId(Long id, Long userId) {
@@ -75,13 +82,17 @@ public class PersonMapper {
         jdbcTemplate.update(sql, id, userId);
     }
 
-    public long countPhotosByPersonId(Long personId) {
+    public long countPhotosByPersonIdAndUserId(Long personId, Long userId) {
         String sql = """
-                SELECT COUNT(DISTINCT photo_id)
-                FROM pm_face
-                WHERE person_id = ?
+                SELECT COUNT(DISTINCT face.photo_id)
+                FROM pm_face face
+                INNER JOIN pm_person person ON person.id = face.person_id
+                INNER JOIN pm_photo photo ON photo.id = face.photo_id
+                WHERE person.id = ?
+                  AND person.user_id = ?
+                  AND photo.user_id = ?
                 """;
-        Long count = jdbcTemplate.queryForObject(sql, Long.class, personId);
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, personId, userId, userId);
         return count == null ? 0L : count;
     }
 

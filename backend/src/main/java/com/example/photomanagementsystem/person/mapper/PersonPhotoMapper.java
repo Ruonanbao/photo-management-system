@@ -49,7 +49,9 @@ public class PersonPhotoMapper {
                        photo.location_name, photo.camera_make, photo.camera_model, photo.is_favorite,
                        photo.created_at, photo.updated_at
                 FROM pm_photo photo
+                INNER JOIN pm_person person ON person.id = ?
                 WHERE photo.user_id = ?
+                  AND person.user_id = ?
                   AND EXISTS (
                       SELECT 1
                       FROM pm_face face
@@ -57,7 +59,7 @@ public class PersonPhotoMapper {
                   )
                 ORDER BY COALESCE(photo.shot_at, photo.created_at) DESC, photo.id DESC
                 """;
-        return jdbcTemplate.query(sql, photoRowMapper, userId, personId);
+        return jdbcTemplate.query(sql, photoRowMapper, personId, userId, userId, personId);
     }
 
     private LocalDateTime toLocalDateTime(Timestamp timestamp) {
