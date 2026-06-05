@@ -1,6 +1,7 @@
 package com.example.photomanagementsystem.user.service.impl;
 
 import com.example.photomanagementsystem.common.BizException;
+import com.example.photomanagementsystem.common.CurrentUserProvider;
 import com.example.photomanagementsystem.user.dto.UserProfileUpdateDTO;
 import com.example.photomanagementsystem.user.entity.SysUser;
 import com.example.photomanagementsystem.user.mapper.SysUserMapper;
@@ -22,12 +23,12 @@ public class UserServiceImpl implements UserService {
 
     private static final int EMAIL_MAX_LENGTH = 100;
 
-    private static final long MOCK_USER_ID = 1L;
-
     private final SysUserMapper sysUserMapper;
+    private final CurrentUserProvider currentUserProvider;
 
-    public UserServiceImpl(SysUserMapper sysUserMapper) {
+    public UserServiceImpl(SysUserMapper sysUserMapper, CurrentUserProvider currentUserProvider) {
         this.sysUserMapper = sysUserMapper;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @Override
@@ -53,8 +54,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private Long getCurrentUserId() {
-        // TODO Replace with authenticated user id after JWT is enabled.
-        return MOCK_USER_ID;
+        return currentUserProvider.getCurrentUserId();
     }
 
     private void validateProfile(UserProfileUpdateDTO updateDTO) {

@@ -1,6 +1,7 @@
 package com.example.photomanagementsystem.user.service.impl;
 
 import com.example.photomanagementsystem.common.BizException;
+import com.example.photomanagementsystem.config.JwtUtils;
 import com.example.photomanagementsystem.user.dto.UserLoginDTO;
 import com.example.photomanagementsystem.user.dto.UserRegisterDTO;
 import com.example.photomanagementsystem.user.entity.SysUser;
@@ -13,10 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.UUID;
 
 /**
  * Authentication service implementation.
@@ -129,8 +127,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String buildToken(SysUser user) {
-        String value = user.getId() + ":" + UUID.randomUUID();
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+        return JwtUtils.generateToken(user.getId(), user.getUsername());
     }
 
     private boolean isEnabledStatus(Integer status) {

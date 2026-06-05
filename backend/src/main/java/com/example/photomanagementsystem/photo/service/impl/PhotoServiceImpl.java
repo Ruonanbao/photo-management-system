@@ -1,6 +1,7 @@
 package com.example.photomanagementsystem.photo.service.impl;
 
 import com.example.photomanagementsystem.common.BizException;
+import com.example.photomanagementsystem.common.CurrentUserProvider;
 import com.example.photomanagementsystem.photo.dto.PhotoFavoriteDTO;
 import com.example.photomanagementsystem.photo.dto.PhotoListQueryDTO;
 import com.example.photomanagementsystem.photo.dto.PhotoUploadDTO;
@@ -50,7 +51,6 @@ import java.util.UUID;
 @Service
 public class PhotoServiceImpl implements PhotoService {
 
-    private static final long MOCK_USER_ID = 1L;
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 100;
@@ -60,14 +60,17 @@ public class PhotoServiceImpl implements PhotoService {
 
     private final PhotoMapper photoMapper;
     private final PhotoAlbumMapper photoAlbumMapper;
+    private final CurrentUserProvider currentUserProvider;
     private final String storagePath;
     private final long maxFileSizeBytes;
 
     public PhotoServiceImpl(PhotoMapper photoMapper, PhotoAlbumMapper photoAlbumMapper,
+            CurrentUserProvider currentUserProvider,
             @Value("${photo.storage.path:uploads/photos}") String storagePath,
             @Value("${spring.servlet.multipart.max-file-size:50MB}") DataSize maxFileSize) {
         this.photoMapper = photoMapper;
         this.photoAlbumMapper = photoAlbumMapper;
+        this.currentUserProvider = currentUserProvider;
         this.storagePath = storagePath;
         this.maxFileSizeBytes = maxFileSize.toBytes();
     }
@@ -160,7 +163,7 @@ public class PhotoServiceImpl implements PhotoService {
     public void deletePhoto(Long id) {
         Long userId = getCurrentUserId();
         Photo photo = getPhotoEntity(id, userId);
-        photoAlbumMapper.deleteByPhotoId(id);
+        photoAlbumMapper.deleteByPhotoIdAndUserId(id, userId);
         photoMapper.deleteByIdAndUserId(id, userId);
         deleteLocalFile(Paths.get(photo.getFilePath()));
     }
@@ -408,8 +411,7 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     private Long getCurrentUserId() {
-        // TODO Replace with authenticated user id after JWT or Session is enabled.
-        return MOCK_USER_ID;
+        return currentUserProvider.getCurrentUserId();
     }
 
     private PhotoVO convertToPhotoVO(Photo photo) {

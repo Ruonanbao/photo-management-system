@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.notNullValue;
+import static com.example.photomanagementsystem.testsupport.TestJwtSupport.jwt;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -43,7 +44,7 @@ class UserControllerTest {
     void getProfileShouldReturnSuccess() throws Exception {
         Mockito.when(userService.getProfile()).thenReturn(profileVO());
 
-        mockMvc.perform(get("/api/v1/user/profile"))
+        mockMvc.perform(get("/api/v1/user/profile").with(jwt(1L)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.id", notNullValue()));
@@ -53,7 +54,7 @@ class UserControllerTest {
     void getProfileWhenUserNotExistsShouldReturnBizFailure() throws Exception {
         Mockito.when(userService.getProfile()).thenThrow(new BizException(404, "user not found"));
 
-        mockMvc.perform(get("/api/v1/user/profile"))
+        mockMvc.perform(get("/api/v1/user/profile").with(jwt(1L)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(404));
     }
@@ -63,6 +64,7 @@ class UserControllerTest {
         Mockito.when(userService.updateProfile(any())).thenReturn(profileVO());
 
         mockMvc.perform(put("/api/v1/user/profile")
+                        .with(jwt(1L))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(toJson(profileBody("Integration Test User"))))
                 .andExpect(status().isOk())
@@ -75,6 +77,7 @@ class UserControllerTest {
         Mockito.when(userService.updateProfile(any())).thenThrow(new BizException(400, "invalid profile"));
 
         mockMvc.perform(put("/api/v1/user/profile")
+                        .with(jwt(1L))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(toJson(profileBody("a".repeat(51)))))
                 .andExpect(status().isOk())
