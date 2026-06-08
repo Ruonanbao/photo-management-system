@@ -1,7 +1,7 @@
 <template>
   <div class="photo-grid">
     <article v-for="photo in photos" :key="photo.id" class="photo-tile" @click="$router.push(`/photos/${photo.id}`)">
-      <AuthenticatedImage :photo-id="photo.id" :alt="photo.originalName || photo.filename" />
+      <AuthenticatedImage :photo-id="photo.id" :mime-type="photo.mimeType" :alt="photo.originalName || photo.filename" />
       <button class="favorite-float" type="button" @click.stop="emit('favorite', photo)">
         <el-icon><StarFilled v-if="photo.favorite" /><Star v-else /></el-icon>
       </button>

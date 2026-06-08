@@ -107,6 +107,15 @@ public class PhotoController {
                 .body(resource);
     }
 
+    @GetMapping("/{id}/preview")
+    public ResponseEntity<Resource> previewPhoto(@PathVariable Long id) {
+        PhotoDownloadVO previewVO = photoService.getPreviewFile(id);
+        Resource resource = new FileSystemResource(previewVO.getPath());
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(previewVO.getMimeType()))
+                .body(resource);
+    }
+
     @GetMapping("/timeline")
     public Result<List<PhotoTimelineVO>> listTimeline() {
         return Result.success(photoService.listTimeline());
