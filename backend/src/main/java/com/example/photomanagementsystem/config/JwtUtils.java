@@ -19,12 +19,12 @@ public class JwtUtils {
     private  static final SecretKey SECRET_KEY  = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
     //生成token
-    public static String generateToken(Long userId, String username) {
+    public static String generateToken(Long userId, String userName) {
         Date now = new Date();
         Date expireTime = new Date(now.getTime() + EXPIRE_TIME);
         return Jwts.builder()
                 .claim("userId", userId)
-                .claim("username", username)
+                .claim("userName", userName)
                 .issuedAt(now)
                 .expiration(expireTime)
                 .signWith(SECRET_KEY)//使用 secretKey 对 JWT 进行签名,即给 Token 盖章
@@ -51,7 +51,7 @@ public class JwtUtils {
     // 从 token 中获取用户名
     public static String getuserName(String token) {
         Claims claims = parseToken(token);
-        return claims.get("username", String.class);
+        return claims.get("userName", String.class);
     }
 
     //判断token是否过期

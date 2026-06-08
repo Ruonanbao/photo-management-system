@@ -1,3 +1,5 @@
+import { downloadPhotoBlob } from '@/api/photo'
+
 export function formatDateTime(value?: string | null) {
   if (!value) return '未记录'
   return new Date(value).toLocaleString('zh-CN', {
@@ -15,10 +17,6 @@ export function formatFileSize(value?: number | null) {
   return `${(value / 1024 / 1024).toFixed(1)} MB`
 }
 
-export function photoDownloadUrl(id?: number | string | null) {
-  return id ? `http://localhost:8080/api/v1/photos/${id}/download` : ''
-}
-
 export function groupByDay<T extends { shotAt?: string; createTime?: string }>(items: T[]) {
   return items.reduce<Record<string, T[]>>((groups, item) => {
     const value = item.shotAt || item.createTime || ''
@@ -31,6 +29,14 @@ export function groupByDay<T extends { shotAt?: string; createTime?: string }>(i
   }, {})
 }
 
-export function triggerPhotoDownload(id: number) {
-  window.open(photoDownloadUrl(id), '_blank')
+export async function triggerPhotoDownload(id: number) {
+  const blob = await downloadPhotoBlob(id)
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = `photo-${id}`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(objectUrl)
 }

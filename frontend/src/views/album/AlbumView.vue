@@ -12,7 +12,7 @@
     <div v-else class="album-grid">
       <article v-for="album in albums" :key="album.id" class="album-card" @click="$router.push(`/albums/${album.id}`)">
         <div class="album-cover">
-          <img v-if="album.coverPhotoId" :src="photoDownloadUrl(album.coverPhotoId)" alt="" />
+          <AuthenticatedImage v-if="album.coverPhotoId" :photo-id="album.coverPhotoId" alt="" />
           <Collection v-else />
         </div>
         <h3>{{ album.name }}</h3>
@@ -43,7 +43,7 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { Collection, Plus } from '@element-plus/icons-vue'
 
 import { createAlbum, listAlbums, type Album } from '@/api/album'
-import { photoDownloadUrl } from '@/utils/format'
+import AuthenticatedImage from '@/components/AuthenticatedImage.vue'
 import { useAppStore } from '@/store/app'
 
 const appStore = useAppStore()
