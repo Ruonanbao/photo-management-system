@@ -57,6 +57,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/.idea/
+frontend/tsconfig.tsbuildinfo
+
+# Runtime uploads
+uploads/
+backend/uploads/
 
 # macOS
 .DS_Store

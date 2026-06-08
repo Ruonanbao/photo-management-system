@@ -24,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization");
 
         // 2. 判断请求头是否有 Token，并且是否以 Bearer 开头
-        if (authorization != null && authorization.startsWith("Bearer")) {
+        if (authorization != null && authorization.startsWith("Bearer ")) {
 
             // 3. 去掉 Bearer 前缀，拿到真正的 Token
             String token = authorization.substring(7);

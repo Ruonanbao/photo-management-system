@@ -10,7 +10,7 @@ export interface Result<T> {
 }
 
 const service = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: '',
   timeout: 15000
 })
 

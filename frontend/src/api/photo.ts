@@ -85,6 +85,12 @@ export function updateFavorite(id: number, favorite: boolean) {
   return request.put<unknown, Photo>(`/api/v1/photos/${id}/favorite`, { favorite })
 }
 
+export function downloadPhotoBlob(id: number) {
+  return request.get<unknown, Blob>(`/api/v1/photos/${id}/download`, {
+    responseType: 'blob'
+  })
+}
+
 export function listTimeline() {
   return request.get<unknown, PhotoTimeline[]>('/api/v1/photos/timeline')
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="detail-layout">
     <section class="photo-stage">
-      <el-image v-if="photo" :src="photoDownloadUrl(photo.id)" fit="contain" />
+      <AuthenticatedImage v-if="photo" :photo-id="photo.id" :alt="photo.originalName || photo.filename" />
       <el-skeleton v-else :rows="8" animated />
     </section>
     <aside class="info-panel">
@@ -35,7 +35,8 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft, Delete, Download, Star, StarFilled } from '@element-plus/icons-vue'
 
 import { deletePhoto, getPhoto, updateFavorite, type Photo } from '@/api/photo'
-import { formatDateTime, formatFileSize, photoDownloadUrl, triggerPhotoDownload } from '@/utils/format'
+import AuthenticatedImage from '@/components/AuthenticatedImage.vue'
+import { formatDateTime, formatFileSize, triggerPhotoDownload } from '@/utils/format'
 
 const props = defineProps<{ id: number }>()
 const router = useRouter()
