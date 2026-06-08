@@ -95,6 +95,20 @@ class PhotoControllerTest {
     }
 
     @Test
+    void uploadHeicPhotoWithOctetStreamShouldReturnSuccess() throws Exception {
+        String originalName = uniqueOriginalName() + ".heic";
+        MockMultipartFile file = new MockMultipartFile("file", originalName,
+                MediaType.APPLICATION_OCTET_STREAM_VALUE, "heic image bytes".getBytes());
+
+        mockMvc.perform(multipart("/api/v1/photos/upload").file(file).with(jwt(TEST_USER_ID)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.id", notNullValue()))
+                .andExpect(jsonPath("$.data.originalName").value(originalName))
+                .andExpect(jsonPath("$.data.mimeType").value("image/heic"));
+    }
+
+    @Test
     void uploadPhotoToOwnAlbumShouldReturnSuccess() throws Exception {
         Long albumId = insertTestAlbum(TEST_USER_ID, "it_photo_album_" + UUID.randomUUID().toString().replace("-", ""));
         MockMultipartFile file = pngFile(uniqueOriginalName());
