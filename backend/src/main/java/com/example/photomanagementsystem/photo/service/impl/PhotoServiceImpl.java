@@ -55,8 +55,12 @@ public class PhotoServiceImpl implements PhotoService {
     private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 100;
     private static final DateTimeFormatter YEAR_MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
+    private static final String OCTET_STREAM_MIME_TYPE = "application/octet-stream";
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            ".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif");
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif");
+            "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
+            "image/heic-sequence", "image/heif-sequence", "image/x-heic", "image/x-heif");
 
     private final PhotoMapper photoMapper;
     private final PhotoAlbumMapper photoAlbumMapper;
@@ -107,14 +111,15 @@ public class PhotoServiceImpl implements PhotoService {
         Path savedPath = saveFile(file);
         try {
             LocalDateTime now = LocalDateTime.now();
-            Dimension dimension = readImageDimension(savedPath, file.getContentType());
+            String mimeType = resolveMimeType(file);
+            Dimension dimension = readImageDimension(savedPath, mimeType);
             Photo photo = new Photo();
             photo.setUserId(userId);
             photo.setFilename(savedPath.getFileName().toString());
             photo.setOriginalName(file.getOriginalFilename());
             photo.setFilePath(savedPath.toString());
             photo.setFileSize(file.getSize());
-            photo.setMimeType(file.getContentType());
+            photo.setMimeType(mimeType);
             photo.setWidth(dimension == null ? null : dimension.width);
             photo.setHeight(dimension == null ? null : dimension.height);
             photo.setFavorite(Boolean.FALSE);
@@ -269,7 +274,7 @@ public class PhotoServiceImpl implements PhotoService {
         if (file.getSize() > maxFileSizeBytes) {
             throw new BizException(413, "上传文件过大");
         }
-        if (!ALLOWED_MIME_TYPES.contains(file.getContentType())) {
+        if (!isAllowedImageFile(file)) {
             throw new BizException(400, "只允许上传 JPG、PNG、WEBP、HEIC 图片");
         }
     }
@@ -278,7 +283,7 @@ public class PhotoServiceImpl implements PhotoService {
         try {
             Path storageRoot = Paths.get(storagePath).toAbsolutePath().normalize();
             Files.createDirectories(storageRoot);
-            Path savedPath = storageRoot.resolve(buildUniqueFilename(file.getOriginalFilename(), file.getContentType()))
+            Path savedPath = storageRoot.resolve(buildUniqueFilename(file.getOriginalFilename(), resolveMimeType(file)))
                     .normalize();
             if (!savedPath.startsWith(storageRoot)) {
                 throw new BizException(400, "文件名不合法");
@@ -299,12 +304,45 @@ public class PhotoServiceImpl implements PhotoService {
                 case "image/jpeg" -> ".jpg";
                 case "image/png" -> ".png";
                 case "image/webp" -> ".webp";
-                case "image/heic" -> ".heic";
-                case "image/heif" -> ".heif";
+                case "image/heic", "image/heic-sequence", "image/x-heic" -> ".heic";
+                case "image/heif", "image/heif-sequence", "image/x-heif" -> ".heif";
                 default -> "";
             };
         }
         return UUID.randomUUID().toString().replace("-", "") + extension.toLowerCase(Locale.ROOT);
+    }
+
+    private boolean isAllowedImageFile(MultipartFile file) {
+        String extension = getExtension(file.getOriginalFilename()).toLowerCase(Locale.ROOT);
+        String contentType = normalizeMimeType(file.getContentType());
+        if (!StringUtils.hasText(extension)) {
+            return ALLOWED_MIME_TYPES.contains(contentType);
+        }
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            return false;
+        }
+        return !StringUtils.hasText(contentType)
+                || OCTET_STREAM_MIME_TYPE.equals(contentType)
+                || ALLOWED_MIME_TYPES.contains(contentType);
+    }
+
+    private String resolveMimeType(MultipartFile file) {
+        String contentType = normalizeMimeType(file.getContentType());
+        if (StringUtils.hasText(contentType) && !OCTET_STREAM_MIME_TYPE.equals(contentType)) {
+            return contentType;
+        }
+        return switch (getExtension(file.getOriginalFilename()).toLowerCase(Locale.ROOT)) {
+            case ".jpg", ".jpeg" -> "image/jpeg";
+            case ".png" -> "image/png";
+            case ".webp" -> "image/webp";
+            case ".heic" -> "image/heic";
+            case ".heif" -> "image/heif";
+            default -> contentType;
+        };
+    }
+
+    private String normalizeMimeType(String contentType) {
+        return StringUtils.hasText(contentType) ? contentType.toLowerCase(Locale.ROOT) : "";
     }
 
     private String getExtension(String originalFilename) {
