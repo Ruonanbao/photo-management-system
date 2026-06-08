@@ -32,6 +32,8 @@ public interface PhotoService {
 
     PhotoDownloadVO getDownloadFile(Long id);
 
+    PhotoDownloadVO getPreviewFile(Long id);
+
     List<PhotoTimelineVO> listTimeline();
 
     List<PhotoLocationVO> listLocations();

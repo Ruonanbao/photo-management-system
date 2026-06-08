@@ -424,6 +424,24 @@ button {
   background: #d8e1ea;
 }
 
+.heic-placeholder {
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  padding: 16px;
+  color: #475569;
+  text-align: center;
+}
+
+.heic-placeholder span {
+  font-weight: 700;
+}
+
+.heic-placeholder small {
+  max-width: 240px;
+  line-height: 1.5;
+}
+
 .info-panel {
   display: flex;
   flex-direction: column;

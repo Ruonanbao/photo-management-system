@@ -113,6 +113,11 @@ public class PhotoMapper {
         jdbcTemplate.update(sql, favorite, updateTime, id, userId);
     }
 
+    public void updateThumbnailPath(Long id, Long userId, String thumbnailPath, LocalDateTime updateTime) {
+        String sql = "UPDATE pm_photo SET thumbnail_path = ?, updated_at = ? WHERE id = ? AND user_id = ?";
+        jdbcTemplate.update(sql, thumbnailPath, updateTime, id, userId);
+    }
+
     public void deleteByIdAndUserId(Long id, Long userId) {
         String sql = "DELETE FROM pm_photo WHERE id = ? AND user_id = ?";
         jdbcTemplate.update(sql, id, userId);

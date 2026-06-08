@@ -9,6 +9,9 @@ import com.example.photomanagementsystem.photo.entity.AlbumPhoto;
 import com.example.photomanagementsystem.photo.entity.Photo;
 import com.example.photomanagementsystem.photo.mapper.PhotoAlbumMapper;
 import com.example.photomanagementsystem.photo.mapper.PhotoMapper;
+import com.example.photomanagementsystem.photo.service.PhotoMetadata;
+import com.example.photomanagementsystem.photo.service.PhotoMetadataExtractor;
+import com.example.photomanagementsystem.photo.service.PhotoPreviewGenerator;
 import com.example.photomanagementsystem.photo.service.PhotoService;
 import com.example.photomanagementsystem.photo.vo.PersonPhotoRowVO;
 import com.example.photomanagementsystem.photo.vo.PhotoDownloadVO;
@@ -17,7 +20,10 @@ import com.example.photomanagementsystem.photo.vo.PhotoPageVO;
 import com.example.photomanagementsystem.photo.vo.PhotoPeopleVO;
 import com.example.photomanagementsystem.photo.vo.PhotoTimelineVO;
 import com.example.photomanagementsystem.photo.vo.PhotoVO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -51,6 +57,7 @@ import java.util.UUID;
 @Service
 public class PhotoServiceImpl implements PhotoService {
 
+    private static final Logger log = LoggerFactory.getLogger(PhotoServiceImpl.class);
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 100;
@@ -65,16 +72,21 @@ public class PhotoServiceImpl implements PhotoService {
     private final PhotoMapper photoMapper;
     private final PhotoAlbumMapper photoAlbumMapper;
     private final CurrentUserProvider currentUserProvider;
+    private final PhotoMetadataExtractor photoMetadataExtractor;
+    private final PhotoPreviewGenerator photoPreviewGenerator;
     private final String storagePath;
     private final long maxFileSizeBytes;
 
     public PhotoServiceImpl(PhotoMapper photoMapper, PhotoAlbumMapper photoAlbumMapper,
-            CurrentUserProvider currentUserProvider,
+            CurrentUserProvider currentUserProvider, PhotoMetadataExtractor photoMetadataExtractor,
+            PhotoPreviewGenerator photoPreviewGenerator,
             @Value("${photo.storage.path:uploads/photos}") String storagePath,
             @Value("${spring.servlet.multipart.max-file-size:50MB}") DataSize maxFileSize) {
         this.photoMapper = photoMapper;
         this.photoAlbumMapper = photoAlbumMapper;
         this.currentUserProvider = currentUserProvider;
+        this.photoMetadataExtractor = photoMetadataExtractor;
+        this.photoPreviewGenerator = photoPreviewGenerator;
         this.storagePath = storagePath;
         this.maxFileSizeBytes = maxFileSize.toBytes();
     }
@@ -109,19 +121,28 @@ public class PhotoServiceImpl implements PhotoService {
         }
 
         Path savedPath = saveFile(file);
+        Path previewPath = null;
         try {
             LocalDateTime now = LocalDateTime.now();
             String mimeType = resolveMimeType(file);
+            previewPath = generatePreview(savedPath, mimeType);
             Dimension dimension = readImageDimension(savedPath, mimeType);
+            PhotoMetadata metadata = photoMetadataExtractor.extract(savedPath);
             Photo photo = new Photo();
             photo.setUserId(userId);
             photo.setFilename(savedPath.getFileName().toString());
             photo.setOriginalName(file.getOriginalFilename());
             photo.setFilePath(savedPath.toString());
+            photo.setThumbnailPath(previewPath == null ? null : previewPath.toString());
             photo.setFileSize(file.getSize());
             photo.setMimeType(mimeType);
             photo.setWidth(dimension == null ? null : dimension.width);
             photo.setHeight(dimension == null ? null : dimension.height);
+            photo.setShotAt(metadata.shotAt());
+            photo.setLatitude(metadata.latitude());
+            photo.setLongitude(metadata.longitude());
+            photo.setCameraMake(metadata.cameraMake());
+            photo.setCameraModel(metadata.cameraModel());
             photo.setFavorite(Boolean.FALSE);
             photo.setCreateTime(now);
             photo.setUpdateTime(now);
@@ -136,6 +157,7 @@ public class PhotoServiceImpl implements PhotoService {
             }
             return convertToPhotoVO(savedPhoto);
         } catch (RuntimeException exception) {
+            deleteLocalFileQuietly(previewPath);
             deleteLocalFileQuietly(savedPath);
             throw exception;
         }
@@ -170,6 +192,7 @@ public class PhotoServiceImpl implements PhotoService {
         Photo photo = getPhotoEntity(id, userId);
         photoAlbumMapper.deleteByPhotoIdAndUserId(id, userId);
         photoMapper.deleteByIdAndUserId(id, userId);
+        deleteLocalFile(StringUtils.hasText(photo.getThumbnailPath()) ? Paths.get(photo.getThumbnailPath()) : null);
         deleteLocalFile(Paths.get(photo.getFilePath()));
     }
 
@@ -203,6 +226,24 @@ public class PhotoServiceImpl implements PhotoService {
         downloadVO.setFilename(StringUtils.hasText(photo.getOriginalName()) ? photo.getOriginalName() : photo.getFilename());
         downloadVO.setMimeType(photo.getMimeType());
         return downloadVO;
+    }
+
+    @Override
+    public PhotoDownloadVO getPreviewFile(Long id) {
+        Long userId = getCurrentUserId();
+        Photo photo = getPhotoEntity(id, userId);
+        Path previewPath = StringUtils.hasText(photo.getThumbnailPath()) ? Paths.get(photo.getThumbnailPath()) : null;
+        if (previewPath != null && Files.exists(previewPath) && Files.isRegularFile(previewPath)) {
+            PhotoDownloadVO previewVO = new PhotoDownloadVO();
+            previewVO.setPath(previewPath);
+            previewVO.setFilename(previewPath.getFileName().toString());
+            previewVO.setMimeType(MediaType.IMAGE_JPEG_VALUE);
+            return previewVO;
+        }
+        if (isHeicMimeType(photo.getMimeType())) {
+            throw new BizException(404, "HEIC 暂不支持预览，可下载原图查看");
+        }
+        return getDownloadFile(id);
     }
 
     @Override
@@ -297,6 +338,19 @@ public class PhotoServiceImpl implements PhotoService {
         }
     }
 
+    private Path generatePreview(Path savedPath, String mimeType) {
+        if (isHeicMimeType(mimeType)) {
+            log.info("Skipping HEIC preview generation for {}", savedPath.getFileName());
+            return null;
+        }
+        try {
+            return photoPreviewGenerator.generatePreview(savedPath, mimeType);
+        } catch (IOException | RuntimeException exception) {
+            log.warn("Failed to generate preview for {}", savedPath.getFileName(), exception);
+            return null;
+        }
+    }
+
     private String buildUniqueFilename(String originalFilename, String mimeType) {
         String extension = getExtension(originalFilename);
         if (!StringUtils.hasText(extension)) {
@@ -345,6 +399,10 @@ public class PhotoServiceImpl implements PhotoService {
         return StringUtils.hasText(contentType) ? contentType.toLowerCase(Locale.ROOT) : "";
     }
 
+    private boolean isHeicMimeType(String mimeType) {
+        return StringUtils.hasText(mimeType) && (mimeType.contains("heic") || mimeType.contains("heif"));
+    }
+
     private String getExtension(String originalFilename) {
         if (!StringUtils.hasText(originalFilename)) {
             return "";
@@ -358,6 +416,9 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     private Dimension readImageDimension(Path path, String mimeType) {
+        if (isHeicMimeType(mimeType)) {
+            return null;
+        }
         if ("image/webp".equals(mimeType)) {
             return readWebpDimension(path);
         }
@@ -414,6 +475,9 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     private void deleteLocalFile(Path path) {
+        if (path == null) {
+            return;
+        }
         try {
             Files.deleteIfExists(path);
         } catch (IOException exception) {
@@ -422,6 +486,9 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     private void deleteLocalFileQuietly(Path path) {
+        if (path == null) {
+            return;
+        }
         try {
             Files.deleteIfExists(path);
         } catch (IOException ignored) {

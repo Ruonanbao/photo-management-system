@@ -91,6 +91,12 @@ export function downloadPhotoBlob(id: number) {
   })
 }
 
+export function previewPhotoBlob(id: number) {
+  return request.get<unknown, Blob>(`/api/v1/photos/${id}/preview`, {
+    responseType: 'blob'
+  })
+}
+
 export function listTimeline() {
   return request.get<unknown, PhotoTimeline[]>('/api/v1/photos/timeline')
 }

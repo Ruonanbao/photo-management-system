@@ -1,7 +1,12 @@
 <template>
   <div class="detail-layout">
     <section class="photo-stage">
-      <AuthenticatedImage v-if="photo" :photo-id="photo.id" :alt="photo.originalName || photo.filename" />
+      <AuthenticatedImage
+        v-if="photo"
+        :photo-id="photo.id"
+        :mime-type="photo.mimeType"
+        :alt="photo.originalName || photo.filename"
+      />
       <el-skeleton v-else :rows="8" animated />
     </section>
     <aside class="info-panel">
@@ -22,6 +27,7 @@
         <el-descriptions-item label="尺寸">{{ photo.width || '-' }} x {{ photo.height || '-' }}</el-descriptions-item>
         <el-descriptions-item label="拍摄时间">{{ formatDateTime(photo.shotAt) }}</el-descriptions-item>
         <el-descriptions-item label="地点">{{ photo.locationName || '未记录' }}</el-descriptions-item>
+        <el-descriptions-item label="GPS 坐标">{{ coordinateText }}</el-descriptions-item>
         <el-descriptions-item label="相机型号">{{ cameraName }}</el-descriptions-item>
         <el-descriptions-item label="收藏状态">{{ photo.favorite ? '已收藏' : '未收藏' }}</el-descriptions-item>
       </el-descriptions>
@@ -45,6 +51,11 @@ const photo = ref<Photo | null>(null)
 const cameraName = computed(() => {
   if (!photo.value?.cameraMake && !photo.value?.cameraModel) return '未记录'
   return [photo.value.cameraMake, photo.value.cameraModel].filter(Boolean).join(' ')
+})
+
+const coordinateText = computed(() => {
+  if (photo.value?.latitude == null || photo.value?.longitude == null) return '未记录'
+  return `${photo.value.latitude}, ${photo.value.longitude}`
 })
 
 async function loadPhoto() {
